@@ -8,11 +8,11 @@ RUN deluser --remove-home node \
 
 USER 1000
 
-RUN mkdir -p /data
+RUN sudo mkdir -p .node-red/data
 
-WORKDIR /data
+WORKDIR .node-red/data
 
-COPY ./package.json /data/
+COPY ./package.json .node-red/data/
 RUN npm install
 
 ## Release image
@@ -25,27 +25,27 @@ RUN deluser --remove-home node \
 
 USER 1000
 
-RUN mkdir -p /data
 
-COPY ./server.js /data/
-COPY ./settings.js /data/
-COPY ./flows.json /data/
-COPY ./flows_cred.json /data/
-COPY ./package.json /data/
-COPY --from=build /data/node_modules /data/node_modules
+
+COPY ./server.js .node-red/data/
+COPY ./settings.js .node-red/data/
+COPY ./flows.json /.node-red/data/
+COPY ./flows_cred.json /.node-red/data/
+COPY ./package.json /.node-red/data/
+COPY --from=build /.node-red/data/node_modules /.node-red/data/node_modules
 
 USER 0
 
-RUN chgrp -R 0 /data \
-  && chmod -R g=u /data
+RUN chgrp -R 0 /.node-red/data \
+  && chmod -R g=u /.node-red/data
 
 USER 1000
 
-WORKDIR /data
+WORKDIR /.node-red/data
 
 ENV PORT 1880
 ENV NODE_ENV=production
 ENV NODE_PATH=/data/node_modules
 EXPOSE 1880
 
-CMD ["node", "/data/server.js", "/data/flows.json"]
+CMD ["node", "/.node-red/data/server.js", "/.node-red/data/flows.json"]
