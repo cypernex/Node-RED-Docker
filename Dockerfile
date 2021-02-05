@@ -8,7 +8,7 @@ RUN deluser --remove-home node \
 
 USER 1000
 
-RUN sudo mkdir -p .node-red/data
+RUN mkdir -p .node-red/data
 
 WORKDIR .node-red/data
 
