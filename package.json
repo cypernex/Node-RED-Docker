@@ -35,7 +35,7 @@
         "node-red-node-ui-lineargauge": "~0.3.6",
         "node-red-node-ui-list": "~0.2.5",
         "node-red-node-ui-table": "~0.3.1"
-    }
+    },
     "scripts": {
         "start": "server.js"
     }
