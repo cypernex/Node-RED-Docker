@@ -55,7 +55,7 @@ module.exports = {
     // The maximum number of messages nodes will buffer internally as part of their
     // operation. This applies across a range of nodes that operate on message sequences.
     //  defaults to no limit. A value of 0 also means no limit is applied.
-    //nodeMaxMessageBufferLength: 0,
+    //nodeMessageBufferMaxLength: 0,
 
     // To disable the option for using local files for storing keys and certificates in the TLS configuration
     //  node, set this to true
@@ -65,7 +65,7 @@ module.exports = {
     //debugUseColors: true,
 
     // The file containing the flows. If not set, it defaults to flows_<hostname>.json
-    flowFile: 'flows.json',
+    //flowFile: 'flows.json',
 
     // To enabled pretty-printing of the flow within the flow file, set the following
     //  property to true:
@@ -77,28 +77,27 @@ module.exports = {
     // Note: once you set this property, do not change it - doing so will prevent
     // node-red from being able to decrypt your existing credentials and they will be
     // lost.
-    credentialSecret: false,
+    //credentialSecret: "a-secret-key",
 
     // By default, all user data is stored in a directory called `.node-red` under
     // the user's home directory. To use a different location, the following
     // property can be used
-    userDir: '/data/',
+    //userDir: '/home/nol/.node-red/',
 
     // Node-RED scans the `nodes` directory in the userDir to find local node files.
     // The following property can be used to specify an additional directory to scan.
-    nodesDir: '/data/nodes',
+    //nodesDir: '/home/nol/.node-red/nodes',
 
     // By default, the Node-RED UI is available at http://localhost:1880/
     // The following property can be used to specify a different root path.
     // If set to false, this is disabled.
-    //httpAdminRoot: false,
-    httpAdminRoot: "/admin",
+    //httpAdminRoot: '/admin',
 
     // Some nodes, such as HTTP In, can be used to listen for incoming http requests.
     // By default, these are served relative to '/'. The following property
-    // can be used to specify a different root path. If set to false, this is
+    // can be used to specifiy a different root path. If set to false, this is
     // disabled.
-    httpNodeRoot: '/',
+    //httpNodeRoot: '/red-nodes',
 
     // The following property can be used in place of 'httpAdminRoot' and 'httpNodeRoot',
     // to apply the same root to both parts.
@@ -107,7 +106,7 @@ module.exports = {
     // When httpAdminRoot is used to move the UI to a different root path, the
     // following property can be used to identify a directory of static content
     // that should be served at http://localhost:1880/.
-    httpStatic: '/',
+    //httpStatic: '/home/nol/node-red-static/',
 
     // The maximum size of HTTP request that will be accepted by the runtime api.
     // Default: 5mb
@@ -115,7 +114,7 @@ module.exports = {
 
     // If you installed the optional node-red-dashboard you can set it's path
     // relative to httpRoot
-    ui: { path: "ui" },
+    //ui: { path: "ui" },
 
     // Securing Node-RED
     // -----------------
@@ -270,7 +269,7 @@ module.exports = {
     editorTheme: {
         projects: {
             // To enable the Projects feature, set this value to true
-            enabled: false
+            enabled: true
         }
     }
-};
+}
