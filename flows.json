@@ -1,15 +1,15 @@
 [
     {
-        "id": "df88dddf.9c8b7",
+        "id": "7be9f0.3236861",
         "type": "tab",
         "label": "InfluxDB 2.0",
         "disabled": false,
         "info": ""
     },
     {
-        "id": "972b9bf4.c533e8",
+        "id": "4f17fc.fc70a804",
         "type": "inject",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Inject every second",
         "topic": "",
         "payload": "",
@@ -22,14 +22,14 @@
         "y": 80,
         "wires": [
             [
-                "a063f274.1a5d8"
+                "bb100e8f.a06d7"
             ]
         ]
     },
     {
-        "id": "26ae9806.e9ede8",
+        "id": "c2bfda7e.b218c8",
         "type": "comment",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Get Sensor Data",
         "info": "",
         "x": 100,
@@ -37,9 +37,9 @@
         "wires": []
     },
     {
-        "id": "44c427eb.3e3578",
+        "id": "77bdd76b.233968",
         "type": "comment",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Interpret Sensor Data",
         "info": "https://run.mocky.io/v3/b4b2d93d-896c-4d37-b019-5228a61e2338\n\n\nhttps://run.mocky.io/v3/a70af699-0e98-4fe0-9142-7e4c0618f3fb\n\n\nhttps://run.mocky.io/v3/3bb9ba80-d57a-4200-a80b-72d37021e190",
         "x": 340,
@@ -47,9 +47,9 @@
         "wires": []
     },
     {
-        "id": "2f824a9c.a20656",
+        "id": "f9709898.ec2d88",
         "type": "comment",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Send to InfluxDB 2.0",
         "info": "",
         "x": 650,
@@ -57,40 +57,43 @@
         "wires": []
     },
     {
-        "id": "d2970633.554248",
+        "id": "5d6185a7.fbb88c",
         "type": "function",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Split Topic",
-        "func": "// Authored by Martin Hannah & Michael Thompson\n// Last updated by Michael Thompson on 19/2/21\n// split the topic into two parts\nvar parts = msg.topic.split('/');\nvar topic = '';\nvar base = '';\nvar n    = 0;\nfor (var i of parts) {\n    if (n > 1) \n        topic = topic + i ;\n        if (i !== parts.length[i]) \n            topic = topic + '/';\n    n++;\n}\nbase = parts[0] + '/' + parts[1] + '/' ;\nmsg.path = base;\nmsg.topic = topic.substring(2,topic.length - 1);\n\nconst invalidDG = [\"SensorGroup\", \"true\", \"String\", \"undefined\"];\n// Update Device-Group Pairs\nconst DGpairs = flow.get(\"DGpairs\") || {};\nif (msg.topic.indexOf('SensorGroup') != -1 && !(invalidDG.includes(msg.payload))) \n    DGpairs[base] = msg.payload;\n\nflow.set(\"DGpairs\", DGpairs);\n\nreturn msg;",
+        "func": "// Authored by Martin Hannah & Michael Thompson\n// Last updated by Michael Thompson on 19/2/21\n// split the topic into two parts\nvar parts = msg.topic.split('/');\nvar topic = '';\nvar base = '';\nvar n    = 0;\nfor (var i of parts) {\n    if (n > 1) \n        topic = topic + i ;\n        if (i !== parts.length[i]) \n            topic = topic + '/';\n    n++;\n}\nbase = parts[0] + '/' + parts[1] + '/' ;\nmsg.path = base;\nmsg.topic = topic.substring(2,topic.length - 1);\n\nconst invalidDG = [\"SensorGroup\", \"true\", \"String\", \"undefined\"];\n// Update Device-Group Pairs\nconst DevInfo = flow.get(\"DevInfo\") || {};\nif (msg.topic.indexOf('SensorGroup') != -1 && !(invalidDG.includes(msg.payload))) \n    DevInfo[base] = {\"measurement\" : msg.payload,\n                     \"prefix\": \"cyper/ESP12S\",\n                     \"number\"   : parseInt(base.substring(13,16),10)};\n\nflow.set(\"DevInfo\", DevInfo);\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "x": 410,
         "y": 100,
         "wires": [
             [
-                "50e9b1b6.a0a54",
-                "46b2939d.22869c"
+                "68b37599.dbc1fc",
+                "3809f4bd.3a135c",
+                "26ccae22.9ecb62"
             ]
         ]
     },
     {
-        "id": "50e9b1b6.a0a54",
+        "id": "68b37599.dbc1fc",
         "type": "function",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Update Topic Flow Variable ",
-        "func": "// Authored by Michael Thompson on 30/12/2020\n// Last updated by Michael Thompson on 19/2/2021\n\n// Updates flow array containing all topics\n// May or may not be necessary // \n/*\nconst topicArray = flow.get(\"topicArray\") || [];\nif ((topicArray.includes(msg.topic))===false)\n    topicArray.push(msg.topic);\nflow.set(\"topicArray\", topicArray); */\n\n// Find group that matches the device, or if none is found it is ungrouped\nDGpairs = flow.get(\"DGpairs\");\ndevice = msg.path;\n\ngroup = DGpairs[device];\n\nvar topic = msg.topic;\n\n// Updates flow variable containing devices\nconst devices = flow.get(\"devices\") || [];\nif (!(devices.includes(device)) && group !== undefined)\n    devices.push(device);\nflow.set(\"devices\", devices);\n\n// Updates flow variable containing topics within current device\nconst deviceArray = flow.get(device+\"Array\") || [];//flow.get(device+\"Array\") ||\nif (!(deviceArray.includes(topic)) && !topic.includes(\"$\") && group !== undefined)\n    deviceArray.push(topic);\nflow.set(device+\"Array\",deviceArray);\nmsg.array = deviceArray;\n\n// Updates flow variable containing datatypes for each topic\nconst typeDict = flow.get(\"typeDict\") || {};\nif (topic.includes(\"$datatype\"))\n    // Assigns datatype to dict entry of topic name (ie without \"/$datatype\" suffix)\n    typeDict[topic.substring(0, topic.indexOf(\"/$datatype\"))] = msg.payload;\nflow.set(\"typeDict\", typeDict);\n\n// Updates flow variable for current group and topic\nif (!(topic.includes(\"$datatype\") || topic.includes(\"SensorGroup\")) && \ntypeDict[topic] !== undefined  && group !== undefined) { \n    type = typeDict[topic];\n    if (type == \"float\")\n        value = parseFloat(msg.payload);\n    else if (type == \"integer\" || type == \"boolean\")\n        value = Number(msg.payload);\n    // Quotes added to specify string in line protocol\n    else value = '\"' +String(msg.payload)+ '\"';\n    \n    flow.set(device+topic,\n            {\"value\":value,\n            // Bool for if data is new\n             //\"new\":true\n            });\n            \n}\n\nreturn msg;",
+        "func": "// Authored by Michael Thompson on 30/12/2020\n// Last updated by Michael Thompson on 19/2/2021\n\n// Updates flow array containing all topics\n// May or may not be necessary // \n/*\nconst topicArray = flow.get(\"topicArray\") || [];\nif ((topicArray.includes(msg.topic))===false)\n    topicArray.push(msg.topic);\nflow.set(\"topicArray\", topicArray); */\n\n// Find group that matches the device, or if none is found it is ungrouped\nDevInfo = flow.get(\"DevInfo\");\ndevice = msg.path;\n\ngroup = DevInfo[device];\n\nvar topic = msg.topic;\n\n//var value = msg.payload\n\n// Updates flow variable containing devices\nconst devices = flow.get(\"devices\") || [];\nif (!(devices.includes(device)) && group !== undefined)\n    devices.push(device);\nflow.set(\"devices\", devices);\n\n// Updates flow variable containing topics within current device\nconst deviceArray = flow.get(device+\"Array\") || [];//flow.get(device+\"Array\") ||\nif (!(deviceArray.includes(topic)) && !topic.includes(\"$\") && group !== undefined)\n    deviceArray.push(topic);\nflow.set(device+\"Array\",deviceArray);\nmsg.array = deviceArray;\n\n// Updates flow variable containing datatypes for each topic\nconst typeDict = flow.get(\"typeDict\") || {};\nif (topic.includes(\"$datatype\"))\n    // Assigns datatype to dict entry of topic name (ie without \"/$datatype\" suffix)\n    typeDict[topic.substring(0, topic.indexOf(\"/$datatype\"))] = msg.payload;\nflow.set(\"typeDict\", typeDict);\n\n\n// Updates flow variable containing units for each topic\nconst unitDict = flow.get(\"unitDict\") || {};\nif (topic.includes(\"$unit\"))\n    // Assigns datatype to dict entry of topic name (ie without \"/$datatype\" suffix)\n    unitDict[topic.substring(0, topic.indexOf(\"/$unit\"))] = msg.payload;\nflow.set(\"unitDict\", unitDict);\n\n/*\nif (topic.includes(\"proximity\")) {\n    if (value === true)\n        value = 1;\n    if (value === false)\n        value = 0;\n        flow.set(device+topic,\n            {\"value\":value,\n            // Bool for if data is new\n             //\"new\":true\n            });\n    \n}\n */\n\n// Updates flow variable for current group and topic\nif (//!(topic.includes(\"$datatype\")) && !(topic.includes(\"SensorGroup\")) &&  && group !== undefined\ntypeDict[topic] !== undefined ) { \n    type = typeDict[topic];\n    if (type == \"float\")\n        value = parseFloat(msg.payload);\n    else if (type == \"integer\")\n        value = parseInt(msg.payload);\n    else if (type == \"boolean\")\n        value = Boolean(msg.payload);\n\n    // Quotes added to specify string in line protocol\n    else value = '\"' +String(msg.payload)+ '\"';\n\n    flow.set(device+topic,\n            {\"value\":value,\n            // Bool for if data is new\n             //\"new\":true\n            });\n            \n}\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "x": 400,
-        "y": 140,
+        "y": 160,
         "wires": [
-            []
+            [
+                "623e322f.ef68dc"
+            ]
         ]
     },
     {
-        "id": "96350029.01b8",
+        "id": "7802c09c.2851e",
         "type": "mqtt in",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "ESP",
         "topic": "cyper/#",
         "qos": "1",
@@ -100,16 +103,15 @@
         "y": 80,
         "wires": [
             [
-                "d2970633.554248",
-                "f221c6dd.4f2208",
-                "ca7cc4f2.e776c8"
+                "5d6185a7.fbb88c",
+                "febb0b30.50fee8"
             ]
         ]
     },
     {
-        "id": "806b368d.ef5d78",
+        "id": "4ba124b6.d592bc",
         "type": "comment",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Diagnostic: Check for Invalid Code",
         "info": "",
         "x": 1340,
@@ -117,9 +119,9 @@
         "wires": []
     },
     {
-        "id": "9b07e31b.18b58",
+        "id": "8f0ed179.cb4a5",
         "type": "comment",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Diagnostic: Check for Invalid Code",
         "info": "",
         "x": 1340,
@@ -127,9 +129,9 @@
         "wires": []
     },
     {
-        "id": "b29fdf54.336ec",
+        "id": "d208962d.7bfa88",
         "type": "comment",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Lachlan Suggestions",
         "info": "",
         "x": 1320,
@@ -137,9 +139,9 @@
         "wires": []
     },
     {
-        "id": "46fb60df.7f958",
+        "id": "3aaa6ed0.1d63e2",
         "type": "change",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Get Timestamp",
         "rules": [
             {
@@ -162,9 +164,9 @@
         ]
     },
     {
-        "id": "60bf4d2a.5651b4",
+        "id": "b890a8a0.abb788",
         "type": "comment",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Get a Timestamp Change Prototype",
         "info": "",
         "x": 1340,
@@ -172,11 +174,11 @@
         "wires": []
     },
     {
-        "id": "426ce4c9.0f471c",
+        "id": "b5db6670.0de6f8",
         "type": "function",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Reset DGpairs & devices",
-        "func": "flow.set(\"DGpairs\", {});\nvar devices = flow.get(\"devices\");\nfor (var device in devices)\n    flow.set(device+\"Array\", [])\n\n\n\nflow.set(\"devices\",[]);\n\n//flow.set(devices[0]+\"Array\", [])\n\n\nflow.set(\"topicArray\",[])",
+        "func": "flow.set(\"DGpairs\", {});\nvar devices = flow.get(\"devices\");\nfor (var device in devices)\n    flow.set(device+\"Array\", [])\n\n\n\nflow.set(\"devices\",[]);\n\n//flow.set(devices[0]+\"Array\", [])\n\n\nflow.set(\"topicArray\",[])\n\nflow.set(\"typeDict\",{})",
         "outputs": 1,
         "noerr": 0,
         "x": 330,
@@ -186,9 +188,9 @@
         ]
     },
     {
-        "id": "2ad41dcf.fefab2",
+        "id": "3980306a.5e702",
         "type": "inject",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "",
         "topic": "",
         "payload": "",
@@ -201,15 +203,15 @@
         "y": 460,
         "wires": [
             [
-                "426ce4c9.0f471c",
-                "69a395d6.87d6dc"
+                "b5db6670.0de6f8",
+                "a181f794.a55438"
             ]
         ]
     },
     {
-        "id": "b36ac3f3.a06de",
+        "id": "a104865b.1e2868",
         "type": "comment",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Diagnostics",
         "info": "",
         "x": 90,
@@ -217,9 +219,122 @@
         "wires": []
     },
     {
-        "id": "a063f274.1a5d8",
+        "id": "9bd21c6.7e3bde",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "Send New Device Data",
+        "func": "// Authored by Michael Thompson on 29/12/2020\n// Last updated by Michael Thompson on 5/1/2021\nvar device = msg.payload;\nmsg.device = device;\nvar DevInfo = flow.get(\"DevInfo\");\n\n// Get unit from unitDict\nunit = flow.get(\"unitDict\")[topic];\nmsg.unit = unit;\n\n// Array of Sensor Values\ndeviceArr = flow.get(device+\"Array\");\n\n// InfluxDB measurement set to group name as defined by loop over groups array\nmeasurement = DevInfo[device][\"measurement\"];\nmsg.measurement = measurement;\n\n// For each sensor value, if the value is not set to \"undefined\" and contains new data, it is updated\n// in the JSON object\nvar send = false;\n\n// 11/2/21 Lachlan: Prototype ( +\" \"+Date.now()/1000 )\n// Code sourced from \n// https://www.toptal.com/software/definitive-guide-to-datetime-manipulation Punit Jajodia\nconst currentDate = new Date();\nconst timestamp = currentDate.getTime();\n\ndata = \"\";\n//data += \"\\n\"+group+\",host=\"+device+\" \"+\"mcu/execlog\"+\"=\"+flow.get(device+\"mcu/execlog\")[\"value\"]+\" \"+timestamp;\nfor (var topic of deviceArr) \n    if (flow.get(device+topic) !== undefined) { // && !isNaN(flow.get(device+topic)[\"value\"]) && flow.get(device+topic)[\"new\"] === true\n        data += \"\\n\"+measurement+\",host=\"+device+\",device=\"+device+\",unit=\"+unit;\n        for (var tag in DevInfo[device])\n            data +=\",\"+tag+\"=\"+DevInfo[device][tag];\n        \n        data += \" \"+topic+\"=\"+flow.get(device+topic)[\"value\"]+\" \"+timestamp;\n        flow.set(device+topic,undefined);//{\"value\":flow.get(device+topic)[\"value\"],\"new\":false});\n        //send = true;\n    }\nflow.set(device+\"Array\",[]);\n// String of most up-to-date sensor values seperated by new lines returned\nmsg.payload = data;\n\nif (msg.payload !== \"\")\n    return msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 650,
+        "y": 220,
+        "wires": [
+            [
+                "bb100e8f.a06d7",
+                "ac34131a.bfbfb",
+                "83580d76.c4c2",
+                "2e704203.0a27ae"
+            ]
+        ]
+    },
+    {
+        "id": "26ccae22.9ecb62",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "Set Topic to Datatype",
+        "func": "if (flow.get(\"typeDict\")[msg.topic] === undefined) {\n    msg.topic = msg.path + msg.topic + \"/$datatype\";\n    return msg; }\nelse if (flow.get(\"unitDict\")[msg.topic] === undefined) {\n    msg.topic = msg.path + msg.topic + \"/$unit\";\n    return msg; }\nreturn undefined;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 120,
+        "y": 140,
+        "wires": [
+            [
+                "a09593d5.a978b",
+                "53983b57.866be4"
+            ]
+        ]
+    },
+    {
+        "id": "3809f4bd.3a135c",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "Set reboots",
+        "func": "var topic = msg.topic;\n\n if (topic.includes(\"mcu/startingup\") && !topic.includes(\"$\") && msg.payload == \"1\") {\n    var varname = msg.path + \"reboots\";\n    flow.set(varname, {\"value\":1, \"uptime\": msg.payload});\n    \n    // Updates flow variable containing topics within current device\n    const deviceArray = flow.get(msg.path+\"Array\") || [];\n    if (!(deviceArray.includes(\"reboots\")))\n        deviceArray.push(\"reboots\");\n    flow.set(msg.path+\"Array\",deviceArray);\n    \n    return msg;\n}\n    \n\n\n\n\n\n\n\n\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 410,
+        "y": 280,
+        "wires": [
+            [
+                "53ab5df1.bdad14"
+            ]
+        ]
+    },
+    {
+        "id": "53ab5df1.bdad14",
+        "type": "debug",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 590,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "a181f794.a55438",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "Hardcode Datatypes",
+        "func": "var typeDict = flow.get(\"typeDict\")\n\n// Add hardcoded datatypes here\ntypeDict[\"mcu/execlog\"] = \"String\";\n\nflow.set(\"typeDict\", typeDict);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 320,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "bf1bbc9a.a3c3c",
+        "type": "debug",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 200,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "a09593d5.a978b",
+        "type": "digitaloak-mqtt-in",
+        "z": "7be9f0.3236861",
+        "name": "$datatype",
+        "qos": "2",
+        "datatype": "auto",
+        "unsubscribe-after-first-msg-recv": true,
+        "broker": "a0a384b2.b52d18",
+        "x": 160,
+        "y": 200,
+        "wires": [
+            [
+                "bf1bbc9a.a3c3c",
+                "5d6185a7.fbb88c"
+            ]
+        ]
+    },
+    {
+        "id": "bb100e8f.a06d7",
         "type": "array-loop",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Loop over Devices",
         "key": "index",
         "keyType": "msg",
@@ -232,49 +347,14 @@
         "wires": [
             [],
             [
-                "6ec07626.a65c38"
+                "9bd21c6.7e3bde"
             ]
         ]
     },
     {
-        "id": "6ec07626.a65c38",
-        "type": "function",
-        "z": "df88dddf.9c8b7",
-        "name": "Send New Device Data",
-        "func": "// Authored by Michael Thompson on 29/12/2020\n// Last updated by Michael Thompson on 5/1/2021\nvar device = msg.payload;\nvar DGpairs = flow.get(\"DGpairs\");\n\n// Get group from device in GDpairs\ngroup = flow.get(\"DGpairs\")[device];\nmsg.device = device;\nmsg.group = group;\n\n\n// Array of Sensor Values\ndeviceArr = flow.get(device+\"Array\");\n\n\n\n// InfluxDB measurement set to group name as defined by loop over groups array\nmsg.measurement = flow.get(\"DGpairs\")[device];\n\n// For each sensor value, if the value is not set to \"undefined\" and contains new data, it is updated\n// in the JSON object\nvar send = false;\n\n// 11/2/21 Lachlan: Prototype ( +\" \"+Date.now()/1000 )\n// Code sourced from \n// https://www.toptal.com/software/definitive-guide-to-datetime-manipulation Punit Jajodia\nconst currentDate = new Date();\nconst timestamp = currentDate.getTime();\n\ndata = \"\";\n//data += \"\\n\"+group+\",host=\"+device+\" \"+\"mcu/execlog\"+\"=\"+flow.get(device+\"mcu/execlog\")[\"value\"]+\" \"+timestamp;\nfor (var topic of deviceArr) \n    if (flow.get(device+topic) !== undefined ) { //&& !isNaN(flow.get(device+topic)[\"value\"]) && flow.get(device+topic)[\"new\"] === true\n        data += \"\\n\"+group+\",host=\"+device+\" \"+topic+\"=\"+flow.get(device+topic)[\"value\"]+\" \"+timestamp;\n        flow.set(device+topic,undefined);//{\"value\":flow.get(device+topic)[\"value\"],\"new\":false});\n        //send = true;\n    }\nflow.set(device+\"Array\",[]);\n// String of most up-to-date sensor values seperated by new lines returned\nmsg.payload = data;\n\nif (msg.payload !== \"\")\n    return msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 630,
-        "y": 220,
-        "wires": [
-            [
-                "cc3af0ea.2a7c9",
-                "3f38d671.ea838a",
-                "a063f274.1a5d8",
-                "387ce838.c40b08"
-            ]
-        ]
-    },
-    {
-        "id": "f221c6dd.4f2208",
-        "type": "function",
-        "z": "df88dddf.9c8b7",
-        "name": "Set Topic to Datatype",
-        "func": "if (msg.topic.includes(\"/$datatype\") && flow.get(msg.topic + \"/$datatype\") === undefined) {\n    msg.topic = msg.topic + \"/$datatype\";\n    return msg; }\nreturn undefined;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 120,
-        "y": 140,
-        "wires": [
-            [
-                "9648c415.bc2c78"
-            ]
-        ]
-    },
-    {
-        "id": "dd5f357b.c5ea68",
+        "id": "b549f52d.321438",
         "type": "http request",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "",
         "method": "use",
         "ret": "txt",
@@ -283,18 +363,18 @@
         "tls": "",
         "proxy": "",
         "authType": "",
-        "x": 970,
+        "x": 950,
         "y": 120,
         "wires": [
             [
-                "659ec22b.503c2c"
+                "94480f72.c30b7"
             ]
         ]
     },
     {
-        "id": "659ec22b.503c2c",
+        "id": "94480f72.c30b7",
         "type": "debug",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "",
         "active": false,
         "tosidebar": true,
@@ -302,30 +382,30 @@
         "tostatus": false,
         "complete": "true",
         "targetType": "full",
-        "x": 990,
+        "x": 970,
         "y": 160,
         "wires": []
     },
     {
-        "id": "cc3af0ea.2a7c9",
+        "id": "ac34131a.bfbfb",
         "type": "function",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "API Setup (QNAP00)",
-        "func": "// Last updated by Lachlan Magrath on 4/2/2021\n\ntoken = \"IGdDXt04p67V_-ScAN1pkM-gaDxVrpKJmQPVO4IvEFthci1vTQ9obo8PzymKKX3dE8pMKaIupY-vO3j0VUI_iQ==\"; \naddress = \"http://10.0.0.211:19086/api/v2/write\";\norganisation = \"cypernex\";\nbucket = \"hi-res-24h\";\nprecision = \"ms\";\n\nmsg.headers = {};\nmsg.method = \"POST\";\nmsg.url = address+\"?org=\"+organisation+\"&bucket=\"+bucket+\"&precision=\"+precision;\nmsg.headers = {\"Authorization\" : \"Token \" + token}\n\n// 4/3/21. Suggested addition of timestamp. Remove timestamp field.\n// delete msg.timestamp;\n//msg.payload = \"cyper/ESP12S008/,host=host1 mcu/taskschedule05/period=60\";\n//msg.payload = \"testhead,host=host1 meat_percent=64.43234543 1556896326\";\n\nif (msg.measurement === undefined) return;\n\nif (msg.payload != [])\n    return msg;\n\nreturn;",
+        "func": "// Last updated by Lachlan Magrath on 4/2/2021\n\ntoken = \"-UMw1yWWMEO47Ist_ABSEq_p8KBEnZD48T8_mcVUoBVKt3oFpPmtyq3dzy7Q83SfWGCSrJUtN2mv0Lla5jPRAw==\";\naddress = \"http://10.0.0.211:19086/api/v2/write\";\norganisation = \"cypernex\";\nbucket = \"hi-res-24h\";\nprecision = \"ms\";\n\nmsg.headers = {};\nmsg.method = \"POST\";\nmsg.url = address+\"?org=\"+organisation+\"&bucket=\"+bucket+\"&precision=\"+precision;\nmsg.headers = {\"Authorization\" : \"Token \" + token}\n\n// 4/3/21. Suggested addition of timestamp. Remove timestamp field.\n// delete msg.timestamp;\n//msg.payload = \"cyper/ESP12S008/,host=host1 mcu/taskschedule05/period=60\";\n//msg.payload = \"testhead,host=host1 meat_percent=64.43234543 1556896326\";\n\nif (msg.measurement === undefined) return;\n\nif (msg.payload != [])\n    return msg;\n\nreturn;",
         "outputs": 1,
         "noerr": 0,
-        "x": 940,
+        "x": 920,
         "y": 80,
         "wires": [
             [
-                "dd5f357b.c5ea68"
+                "b549f52d.321438"
             ]
         ]
     },
     {
-        "id": "3f38d671.ea838a",
+        "id": "83580d76.c4c2",
         "type": "debug",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "Debug InfluxDB",
         "active": true,
         "tosidebar": true,
@@ -333,30 +413,30 @@
         "tostatus": false,
         "complete": "payload",
         "targetType": "msg",
-        "x": 960,
+        "x": 940,
         "y": 200,
         "wires": []
     },
     {
-        "id": "387ce838.c40b08",
+        "id": "2e704203.0a27ae",
         "type": "function",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "API Setup (QNAP00)",
-        "func": "// Last updated by Lachlan Magrath on 4/2/2021\n\ntoken = \"fENYSkgt5TS9Q0mQsSolV88OvwWKFoFGmdqKF4F2Bl0yVAABplhv7PJvQTNpuDIb8ZcfHCP1gitDBB8QOJcR4A==\"; \naddress = \"http://10.0.0.211:18086/api/v2/write\";\norganisation = \"cypernex\";\nbucket = \"cyperbucket\";\nprecision = \"ms\";\n\nmsg.headers = {};\nmsg.method = \"POST\";\nmsg.url = address+\"?org=\"+organisation+\"&bucket=\"+bucket+\"&precision=\"+precision;\nmsg.headers = {\"Authorization\" : \"Token \" + token}\n\n// 4/3/21. Suggested addition of timestamp. Remove timestamp field.\n// delete msg.timestamp;\n//msg.payload = \"cyper/ESP12S008/,host=host1 mcu/taskschedule05/period=60\";\n//msg.payload = \"testhead,host=host1 meat_percent=64.43234543 1556896326\";\n\nif (msg.measurement === undefined) return;\n\nif (msg.payload != [])\n    return msg;\n\nreturn;",
+        "func": "// Last updated by Lachlan Magrath on 4/2/2021\n\ntoken = \"fENYSkgt5TS9Q0mQsSolV88OvwWKFoFGmdqKF4F2Bl0yVAABplhv7PJvQTNpuDIb8ZcfHCP1gitDBB8QOJcR4A==\"; \naddress = \"http://10.0.0.211:18086/api/v2/write\";\norganisation = \"cypernex\";\nbucket = \"hi-res-24h\";\nprecision = \"ms\";\n\nmsg.headers = {};\nmsg.method = \"POST\";\nmsg.url = address+\"?org=\"+organisation+\"&bucket=\"+bucket+\"&precision=\"+precision;\nmsg.headers = {\"Authorization\" : \"Token \" + token}\n\n// 4/3/21. Suggested addition of timestamp. Remove timestamp field.\n// delete msg.timestamp;\n//msg.payload = \"cyper/ESP12S008/,host=host1 mcu/taskschedule05/period=60\";\n//msg.payload = \"testhead,host=host1 meat_percent=64.43234543 1556896326\";\n\nif (msg.measurement === undefined) return;\n\nif (msg.payload != [])\n    return msg;\n\nreturn;",
         "outputs": 1,
         "noerr": 0,
-        "x": 940,
+        "x": 920,
         "y": 240,
         "wires": [
             [
-                "b76d1a7d.1dbf08"
+                "7d2eada0.9039e4"
             ]
         ]
     },
     {
-        "id": "b76d1a7d.1dbf08",
+        "id": "7d2eada0.9039e4",
         "type": "http request",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "",
         "method": "use",
         "ret": "txt",
@@ -365,107 +445,33 @@
         "tls": "",
         "proxy": "",
         "authType": "",
-        "x": 970,
+        "x": 950,
         "y": 280,
         "wires": [
             [
-                "eff738c1.dd2318"
+                "1a696893.54f397"
             ]
         ]
     },
     {
-        "id": "eff738c1.dd2318",
+        "id": "1a696893.54f397",
         "type": "debug",
-        "z": "df88dddf.9c8b7",
-        "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
-        "x": 990,
-        "y": 320,
-        "wires": []
-    },
-    {
-        "id": "46b2939d.22869c",
-        "type": "function",
-        "z": "df88dddf.9c8b7",
-        "name": "Set reboots",
-        "func": "var topic = msg.topic;\n\n if (topic.includes(\"mcu/startingup\") && !topic.includes(\"$\") && msg.payload == \"1\") {\n    var varname = msg.path + \"reboots\";\n    flow.set(varname, {\"value\":1, \"uptime\": msg.payload});\n    \n    // Updates flow variable containing topics within current device\n    const deviceArray = flow.get(msg.path+\"Array\") || [];\n    if (!(deviceArray.includes(\"reboots\")))\n        deviceArray.push(\"reboots\");\n    flow.set(msg.path+\"Array\",deviceArray);\n    \n    return msg;\n}\n    \n\n\n\n\n\n\n\n\n\n",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 410,
-        "y": 280,
-        "wires": [
-            [
-                "bb2d6974.9be1c8"
-            ]
-        ]
-    },
-    {
-        "id": "bb2d6974.9be1c8",
-        "type": "debug",
-        "z": "df88dddf.9c8b7",
-        "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "x": 590,
-        "y": 360,
-        "wires": []
-    },
-    {
-        "id": "69a395d6.87d6dc",
-        "type": "function",
-        "z": "df88dddf.9c8b7",
-        "name": "Hardcode Datatypes",
-        "func": "var typeDict = flow.get(\"typeDict\")\n\n// Add hardcoded datatypes here\ntypeDict[\"mcu/execlog\"] = \"String\";\n\nflow.set(\"typeDict\", typeDict);\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 320,
-        "y": 500,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "8db0975c.255e48",
-        "type": "debug",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "",
         "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
-        "x": 200,
-        "y": 280,
+        "complete": "true",
+        "targetType": "full",
+        "x": 970,
+        "y": 320,
         "wires": []
     },
     {
-        "id": "ca7cc4f2.e776c8",
-        "type": "function",
-        "z": "df88dddf.9c8b7",
-        "name": "",
-        "func": "if (msg.topic.includes(\"execlog\"))\n    return msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 180,
-        "y": 360,
-        "wires": [
-            [
-                "ed9e0f0e.24523"
-            ]
-        ]
-    },
-    {
-        "id": "ed9e0f0e.24523",
+        "id": "53983b57.866be4",
         "type": "debug",
-        "z": "df88dddf.9c8b7",
+        "z": "7be9f0.3236861",
         "name": "",
         "active": false,
         "tosidebar": true,
@@ -473,26 +479,83 @@
         "tostatus": false,
         "complete": "false",
         "x": 360,
-        "y": 380,
+        "y": 220,
         "wires": []
     },
     {
-        "id": "9648c415.bc2c78",
-        "type": "digitaloak-mqtt-in",
-        "z": "df88dddf.9c8b7",
-        "name": "$datatype",
-        "qos": "2",
-        "datatype": "auto",
-        "unsubscribe-after-first-msg-recv": true,
-        "broker": "a0a384b2.b52d18",
-        "x": 160,
-        "y": 200,
+        "id": "febb0b30.50fee8",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "func": "if (msg.topic.includes(\"proximity/movement\"))\n    return msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 100,
+        "y": 340,
         "wires": [
             [
-                "8db0975c.255e48",
-                "d2970633.554248"
+                "ae5f00eb.e2201"
             ]
         ]
+    },
+    {
+        "id": "ae5f00eb.e2201",
+        "type": "debug",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 320,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "623e322f.ef68dc",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "func": "if (msg.topic.includes(\"proximity/movement\")) {\n    msg.payload = flow.get(\"cyper/ESP12S-012/proximity/movement\");\n    return msg; }",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 830,
+        "y": 360,
+        "wires": [
+            [
+                "fc25d5b8.2a6d98"
+            ]
+        ]
+    },
+    {
+        "id": "fc25d5b8.2a6d98",
+        "type": "debug",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 890,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "49220983.8a45f8",
+        "type": "debug",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "toopic",
+        "targetType": "msg",
+        "x": 580,
+        "y": 460,
+        "wires": []
     },
     {
         "id": "a0a384b2.b52d18",
