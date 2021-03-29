@@ -61,11 +61,11 @@
         "type": "function",
         "z": "7be9f0.3236861",
         "name": "Split Topic",
-        "func": "// Authored by Martin Hannah & Michael Thompson\n// Last updated by Michael Thompson on 19/2/21\n// split the topic into two parts\nvar parts = msg.topic.split('/');\nvar topic = '';\nvar base = '';\nvar n    = 0;\nfor (var i of parts) {\n    if (n > 1) \n        topic = topic + i ;\n        if (i !== parts.length[i]) \n            topic = topic + '/';\n    n++;\n}\nbase = parts[0] + '/' + parts[1] + '/' ;\nmsg.path = base;\nmsg.topic = topic.substring(2,topic.length - 1);\n\nconst invalidDG = [\"SensorGroup\", \"true\", \"String\", \"undefined\"];\n// Update Device-Group Pairs\nconst DevInfo = flow.get(\"DevInfo\") || {};\nif (msg.topic.indexOf('SensorGroup') != -1 && !(invalidDG.includes(msg.payload))) \n    DevInfo[base] = {\"measurement\" : msg.payload,\n                     \"prefix\": \"cyper/ESP12S\",\n                     \"number\"   : parseInt(base.substring(13,16),10)};\n\nflow.set(\"DevInfo\", DevInfo);\n\nreturn msg;",
+        "func": "// Authored by Martin Hannah & Michael Thompson\n// Last updated by Michael Thompson on 19/2/21\n// split the topic into two parts\nvar parts = msg.topic.split('/');\nvar topic = '';\nvar base = '';\nvar n    = 0;\nfor (var i of parts) {\n    if (n > 1) \n        topic = topic + i ;\n        if (i !== parts.length[i]) \n            topic = topic + '/';\n    n++;\n}\nbase = parts[0] + '/' + parts[1] + '/' ;\nmsg.path = base;\nmsg.topic = topic.substring(2,topic.length - 1);\n\nconst invalidDG = [\"SensorGroup\", \"true\", \"String\", \"undefined\"];\n// Update Device-Group Pairs\nconst DevInfo = flow.get(\"DevInfo\") || {};\nif (msg.topic.indexOf('SensorGroup') != -1 && !(invalidDG.includes(msg.payload))) \n    DevInfo[base] = {\"measurement\" : msg.payload,\n    \n                     \"prefix\": \"cyper/ESP12S\",\n                     \"number\"   : parseInt(base.substring(13,16),10)};\n\nflow.set(\"DevInfo\", DevInfo);\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 410,
-        "y": 100,
+        "x": 350,
+        "y": 80,
         "wires": [
             [
                 "68b37599.dbc1fc",
@@ -83,11 +83,9 @@
         "outputs": 1,
         "noerr": 0,
         "x": 400,
-        "y": 160,
+        "y": 140,
         "wires": [
-            [
-                "623e322f.ef68dc"
-            ]
+            []
         ]
     },
     {
@@ -103,8 +101,7 @@
         "y": 80,
         "wires": [
             [
-                "5d6185a7.fbb88c",
-                "febb0b30.50fee8"
+                "5d6185a7.fbb88c"
             ]
         ]
     },
@@ -178,7 +175,7 @@
         "type": "function",
         "z": "7be9f0.3236861",
         "name": "Reset DGpairs & devices",
-        "func": "flow.set(\"DGpairs\", {});\nvar devices = flow.get(\"devices\");\nfor (var device in devices)\n    flow.set(device+\"Array\", [])\n\n\n\nflow.set(\"devices\",[]);\n\n//flow.set(devices[0]+\"Array\", [])\n\n\nflow.set(\"topicArray\",[])\n\nflow.set(\"typeDict\",{})",
+        "func": "flow.set(\"DGpairs\", {});\nvar devices = flow.get(\"devices\");\nfor (var device in devices)\n    flow.set(device+\"Array\", [])\n\n\n\nflow.set(\"devices\",[]);\n\n//flow.set(devices[0]+\"Array\", [])\n\n\nflow.set(\"topicArray\",[])\n\nflow.set(\"typeDict\",{})\n\nflow.set(\"unitDict\",{})",
         "outputs": 1,
         "noerr": 0,
         "x": 330,
@@ -195,11 +192,11 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "repeat": "3600",
+        "repeat": "",
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
-        "x": 110,
+        "x": 100,
         "y": 460,
         "wires": [
             [
@@ -223,10 +220,10 @@
         "type": "function",
         "z": "7be9f0.3236861",
         "name": "Send New Device Data",
-        "func": "// Authored by Michael Thompson on 29/12/2020\n// Last updated by Michael Thompson on 5/1/2021\nvar device = msg.payload;\nmsg.device = device;\nvar DevInfo = flow.get(\"DevInfo\");\n\n// Get unit from unitDict\nunit = flow.get(\"unitDict\")[topic];\nmsg.unit = unit;\n\n// Array of Sensor Values\ndeviceArr = flow.get(device+\"Array\");\n\n// InfluxDB measurement set to group name as defined by loop over groups array\nmeasurement = DevInfo[device][\"measurement\"];\nmsg.measurement = measurement;\n\n// For each sensor value, if the value is not set to \"undefined\" and contains new data, it is updated\n// in the JSON object\nvar send = false;\n\n// 11/2/21 Lachlan: Prototype ( +\" \"+Date.now()/1000 )\n// Code sourced from \n// https://www.toptal.com/software/definitive-guide-to-datetime-manipulation Punit Jajodia\nconst currentDate = new Date();\nconst timestamp = currentDate.getTime();\n\ndata = \"\";\n//data += \"\\n\"+group+\",host=\"+device+\" \"+\"mcu/execlog\"+\"=\"+flow.get(device+\"mcu/execlog\")[\"value\"]+\" \"+timestamp;\nfor (var topic of deviceArr) \n    if (flow.get(device+topic) !== undefined) { // && !isNaN(flow.get(device+topic)[\"value\"]) && flow.get(device+topic)[\"new\"] === true\n        data += \"\\n\"+measurement+\",host=\"+device+\",device=\"+device+\",unit=\"+unit;\n        for (var tag in DevInfo[device])\n            data +=\",\"+tag+\"=\"+DevInfo[device][tag];\n        \n        data += \" \"+topic+\"=\"+flow.get(device+topic)[\"value\"]+\" \"+timestamp;\n        flow.set(device+topic,undefined);//{\"value\":flow.get(device+topic)[\"value\"],\"new\":false});\n        //send = true;\n    }\nflow.set(device+\"Array\",[]);\n// String of most up-to-date sensor values seperated by new lines returned\nmsg.payload = data;\n\nif (msg.payload !== \"\")\n    return msg;",
+        "func": "// Authored by Michael Thompson on 29/12/2020\n// Last updated by Michael Thompson on 5/1/2021\nvar device = msg.payload;\nmsg.device = device;\nvar DevInfo = flow.get(\"DevInfo\");\n\n\n// Array of Sensor Values\ndeviceArr = flow.get(device+\"Array\");\n\n// InfluxDB measurement set to group name as defined by loop over groups array\nmeasurement = DevInfo[device][\"measurement\"];\nmsg.measurement = measurement;\n\n// For each sensor value, if the value is not set to \"undefined\" and contains new data, it is updated\n// in the JSON object\nvar send = false;\n\n// 11/2/21 Lachlan: Prototype ( +\" \"+Date.now()/1000 )\n// Code sourced from \n// https://www.toptal.com/software/definitive-guide-to-datetime-manipulation Punit Jajodia\nconst currentDate = new Date();\nconst timestamp = currentDate.getTime();\n\ndata = \"\";\n//data += \"\\n\"+group+\",host=\"+device+\" \"+\"mcu/execlog\"+\"=\"+flow.get(device+\"mcu/execlog\")[\"value\"]+\" \"+timestamp;\nfor (var topic of deviceArr) \n    if (flow.get(device+topic) !== undefined) { // && !isNaN(flow.get(device+topic)[\"value\"]) && flow.get(device+topic)[\"new\"] === true\n        data += \"\\n\"+measurement+\",host=\"+device+\",device=\"+device+\",unit=\"+flow.get(\"unitDict\")[topic];\n        for (var tag in DevInfo[device])\n            if (tag != measurement)\n                data +=\",\"+tag+\"=\"+DevInfo[device][tag];\n        \n        data += \" \"+topic+\"=\"+flow.get(device+topic).value+\" \"+timestamp;\n        flow.set(device+topic,undefined);//{\"value\":flow.get(device+topic)[\"value\"],\"new\":false});\n        //send = true;\n    }\nflow.set(device+\"Array\",[]);\n// String of most up-to-date sensor values seperated by new lines returned\nmsg.payload = data;\n\nif (msg.payload !== \"\")\n    return msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 650,
+        "x": 670,
         "y": 220,
         "wires": [
             [
@@ -241,11 +238,11 @@
         "id": "26ccae22.9ecb62",
         "type": "function",
         "z": "7be9f0.3236861",
-        "name": "Set Topic to Datatype",
+        "name": "Set Topic to Datatype or Unit",
         "func": "if (flow.get(\"typeDict\")[msg.topic] === undefined) {\n    msg.topic = msg.path + msg.topic + \"/$datatype\";\n    return msg; }\nelse if (flow.get(\"unitDict\")[msg.topic] === undefined) {\n    msg.topic = msg.path + msg.topic + \"/$unit\";\n    return msg; }\nreturn undefined;",
         "outputs": 1,
         "noerr": 0,
-        "x": 120,
+        "x": 140,
         "y": 140,
         "wires": [
             [
@@ -265,68 +262,36 @@
         "x": 410,
         "y": 280,
         "wires": [
-            [
-                "53ab5df1.bdad14"
-            ]
+            []
         ]
-    },
-    {
-        "id": "53ab5df1.bdad14",
-        "type": "debug",
-        "z": "7be9f0.3236861",
-        "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "x": 590,
-        "y": 320,
-        "wires": []
     },
     {
         "id": "a181f794.a55438",
         "type": "function",
         "z": "7be9f0.3236861",
-        "name": "Hardcode Datatypes",
-        "func": "var typeDict = flow.get(\"typeDict\")\n\n// Add hardcoded datatypes here\ntypeDict[\"mcu/execlog\"] = \"String\";\n\nflow.set(\"typeDict\", typeDict);\nreturn msg;",
+        "name": "Hardcode Datatypes & Units",
+        "func": "var typeDict = flow.get(\"typeDict\");\n\n// Add hardcoded datatypes here\ntypeDict[\"mcu/execlog\"] = \"String\";\n\nflow.set(\"typeDict\", typeDict);\n\n\nvar unitDict = flow.get(\"unitDict\");\n\nunitDict[\"environment/heatindex\"] = \"°C\";\n\nflow.set(\"unitDict\", unitDict);\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 320,
+        "x": 340,
         "y": 500,
         "wires": [
             []
         ]
     },
     {
-        "id": "bf1bbc9a.a3c3c",
-        "type": "debug",
-        "z": "7be9f0.3236861",
-        "name": "",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "x": 200,
-        "y": 280,
-        "wires": []
-    },
-    {
         "id": "a09593d5.a978b",
         "type": "digitaloak-mqtt-in",
         "z": "7be9f0.3236861",
-        "name": "$datatype",
+        "name": "$datatype / $unit",
         "qos": "2",
         "datatype": "auto",
         "unsubscribe-after-first-msg-recv": true,
         "broker": "a0a384b2.b52d18",
-        "x": 160,
+        "x": 130,
         "y": 200,
         "wires": [
             [
-                "bf1bbc9a.a3c3c",
                 "5d6185a7.fbb88c"
             ]
         ]
@@ -376,7 +341,7 @@
         "type": "debug",
         "z": "7be9f0.3236861",
         "name": "",
-        "active": false,
+        "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -407,7 +372,7 @@
         "type": "debug",
         "z": "7be9f0.3236861",
         "name": "Debug InfluxDB",
-        "active": true,
+        "active": false,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -458,7 +423,7 @@
         "type": "debug",
         "z": "7be9f0.3236861",
         "name": "",
-        "active": true,
+        "active": false,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -483,79 +448,268 @@
         "wires": []
     },
     {
-        "id": "febb0b30.50fee8",
-        "type": "function",
+        "id": "90db300b.260bc",
+        "type": "ui_button",
         "z": "7be9f0.3236861",
         "name": "",
-        "func": "if (msg.topic.includes(\"proximity/movement\"))\n    return msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "x": 100,
-        "y": 340,
+        "group": "267826ed.c3cffa",
+        "order": 11,
+        "width": 2,
+        "height": 1,
+        "passthru": true,
+        "label": "24 H",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "24",
+        "payloadType": "num",
+        "topic": "",
+        "x": 90,
+        "y": 1360,
         "wires": [
             [
-                "ae5f00eb.e2201"
+                "1d3cd21e.c86e3e"
             ]
         ]
     },
     {
-        "id": "ae5f00eb.e2201",
-        "type": "debug",
+        "id": "d23c3341.9b162",
+        "type": "ui_button",
         "z": "7be9f0.3236861",
         "name": "",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
+        "group": "267826ed.c3cffa",
+        "order": 10,
+        "width": 2,
+        "height": 1,
+        "passthru": false,
+        "label": "12 H",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "12",
+        "payloadType": "num",
+        "topic": "",
+        "x": 90,
+        "y": 1400,
+        "wires": [
+            [
+                "1d3cd21e.c86e3e"
+            ]
+        ]
+    },
+    {
+        "id": "c1f23d06.684bd",
+        "type": "ui_button",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "group": "267826ed.c3cffa",
+        "order": 9,
+        "width": 2,
+        "height": 1,
+        "passthru": false,
+        "label": "1 H",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "1",
+        "payloadType": "num",
+        "topic": "",
+        "x": 90,
+        "y": 1320,
+        "wires": [
+            [
+                "1d3cd21e.c86e3e"
+            ]
+        ]
+    },
+    {
+        "id": "1d3cd21e.c86e3e",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "SetTimeRange",
+        "func": "var p_30d  = 1000*60*60*24*30 ; //30 Days\nvar p_7d  = 1000*60*60*24*7 ; //7 Days\nvar p_1d   =  1000*60*60*24 ; // 1 Day\nvar p_hr = 1000*60*60; //1 Hour\n\nvar d = new Date();\nvar current = d.getTime();\n\n\nmsg.fromdate = \"now-\" + msg.payload +\"h\";\nmsg.enddate = \"now\";\n\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
         "x": 320,
-        "y": 400,
-        "wires": []
+        "y": 1360,
+        "wires": [
+            []
+        ]
     },
     {
-        "id": "623e322f.ef68dc",
+        "id": "7b6a4f4f.ce321",
         "type": "function",
         "z": "7be9f0.3236861",
-        "name": "",
-        "func": "if (msg.topic.includes(\"proximity/movement\")) {\n    msg.payload = flow.get(\"cyper/ESP12S-012/proximity/movement\");\n    return msg; }",
+        "name": "SetTimeYesterday",
+        "func": "var p_30d  = 1000*60*60*24*30 ; //30 Days\nvar p_7d  = 1000*60*60*24*7 ; //7 Days\nvar p_1d   =  1000*60*60*24 ; // 1 Day\nvar p_hr = 1000*60*60; //1 Hour\n\nvar d = new Date();\nvar current = d.getTime();\nvar today0h = d.setHours(0,0,0,0); //Timestamp midnight\n\nmsg.fromdate = today0h - p_1d\nmsg.enddate = today0h\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
-        "x": 830,
-        "y": 360,
+        "x": 310,
+        "y": 1400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "99aa2600.5f6d08",
+        "type": "ui_button",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "group": "267826ed.c3cffa",
+        "order": 12,
+        "width": 2,
+        "height": 1,
+        "passthru": false,
+        "label": "Yesterday",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "yesterday",
+        "payloadType": "str",
+        "topic": "",
+        "x": 80,
+        "y": 1440,
         "wires": [
             [
-                "fc25d5b8.2a6d98"
+                "7b6a4f4f.ce321"
             ]
         ]
     },
     {
-        "id": "fc25d5b8.2a6d98",
-        "type": "debug",
+        "id": "4a83e751.3d7558",
+        "type": "ui_template",
         "z": "7be9f0.3236861",
-        "name": "",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "x": 890,
-        "y": 400,
-        "wires": []
+        "group": "267826ed.c3cffa",
+        "name": "Page Got Loaded",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "format": "<script>\n(function() {\n    (function(scope) {\n        scope.send({payload: \"preload\"}); // this gets sent when the view is opened in the browser\n    })(scope);\n})();\n</script>",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "resendOnRefresh": false,
+        "templateScope": "local",
+        "x": 590,
+        "y": 500,
+        "wires": [
+            [
+                "67790d0e.1438b4"
+            ]
+        ]
     },
     {
-        "id": "49220983.8a45f8",
-        "type": "debug",
+        "id": "d645c2da.d35e4",
+        "type": "ui_template",
+        "z": "7be9f0.3236861",
+        "group": "267826ed.c3cffa",
+        "name": "Grafana",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "format": "<html>\n<iframe id=\"myFrame\" width=\"1500px\" height=\"1000px\" style = \"overflow:hidden; margin:auto; border:0px solid green;\"></iframe>\n\n<script>\n//NOTE, more then one chart on a page, rename in the second and following \n//templates the \"myframe\" variable so that every template has a unique name.\n(function(scope) {\n    // watch msg object from Node-RED\n    scope.$watch('msg', function(msg) {\n        // new message received\n        var x = document.getElementById('myFrame');\n        x.setAttribute('src', msg.payload); \n        });\n})(scope);\n</script>\n</html>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": false,
+        "templateScope": "local",
+        "x": 960,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "67790d0e.1438b4",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "BuildTemplate",
+        "func": "//NOTE, more then one chart on a page, rename in the second and following \n//templates the \"myframe\" variable so that every template has a unique name.\n\npanelid=2\n\nmsg.payload= \"http://10.0.0.211:19300/d/fVXCsfUGz/admin-dash?orgId=1\"+\n\"&refresh=5s\"+\n//\"&theme=dark\"+\n//\"&from=\"+ msg.fromdate +\n//\"&to=\"+ msg.enddate +\n\"&panelId=\"+panelid\n\nreturn msg;\n\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 800,
+        "y": 500,
+        "wires": [
+            [
+                "d645c2da.d35e4"
+            ]
+        ]
+    },
+    {
+        "id": "697e244.d1c2cdc",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "SetTimeTodaySofar",
+        "func": "msg.fromdate = \"now/d\";\nmsg.enddate = \"now\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 310,
+        "y": 1480,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2f6c1780.c627c8",
+        "type": "ui_button",
         "z": "7be9f0.3236861",
         "name": "",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "toopic",
-        "targetType": "msg",
-        "x": 580,
-        "y": 460,
-        "wires": []
+        "group": "267826ed.c3cffa",
+        "order": 13,
+        "width": 2,
+        "height": 1,
+        "passthru": false,
+        "label": "Today",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "yesterday",
+        "payloadType": "str",
+        "topic": "",
+        "x": 90,
+        "y": 1480,
+        "wires": [
+            [
+                "697e244.d1c2cdc"
+            ]
+        ]
+    },
+    {
+        "id": "6211179.e6ed6e8",
+        "type": "inject",
+        "z": "7be9f0.3236861",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 90,
+        "y": 540,
+        "wires": [
+            [
+                "f4826c7.d00839"
+            ]
+        ]
+    },
+    {
+        "id": "f4826c7.d00839",
+        "type": "function",
+        "z": "7be9f0.3236861",
+        "name": "Hardcode heatindex unit",
+        "func": "var unitDict = flow.get(\"unitDict\");\n\nunitDict[\"environment/heatindex\"] = \"°C\";\n\nflow.set(\"unitDict\", unitDict);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 320,
+        "y": 540,
+        "wires": [
+            []
+        ]
     },
     {
         "id": "a0a384b2.b52d18",
@@ -577,5 +731,24 @@
         "willTopic": "",
         "willQos": "0",
         "willPayload": ""
+    },
+    {
+        "id": "267826ed.c3cffa",
+        "type": "ui_group",
+        "z": "",
+        "name": "Admin",
+        "tab": "142ede1d.be3742",
+        "order": 1,
+        "disp": true,
+        "width": "30",
+        "collapse": false
+    },
+    {
+        "id": "142ede1d.be3742",
+        "type": "ui_tab",
+        "z": "",
+        "name": "GrafanaTest",
+        "icon": "dashboard",
+        "order": 37
     }
 ]
